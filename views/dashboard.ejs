@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Dashboard - <%= tracker.groupName %></title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont/tabler-icons.min.css">
+    <style>
+        body { background: #f8fafc; }
+        .theme-header { background: linear-gradient(90deg, #1e293b 70%, #2563eb 100%); }
+        .theme-card { background: #fff; border: 1.5px solid #e0e7ef; border-radius: 1.35rem; box-shadow: 0 8px 24px 0 #1e293b0a; }
+        .theme-badge { font-weight: 700; border-radius: 1rem; padding: 0.2em 0.75em; font-size: 0.85rem; background: #e0e7ef; color: #1e293b; }
+        .theme-badge-leader { background: #fef08a; color: #b45309; }
+        .theme-badge-write { background: #dbeafe; color: #2563eb; }
+        .theme-badge-read { background: #e0e7ef; color: #64748b; }
+        .avatar { background: linear-gradient(135deg, #2563eb 50%, #1e293b 100%); color: #fff; font-weight: bold; border: 3px solid #2563eb; border-radius: 50%; width: 3.5rem; height: 3.5rem; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 2px 12px #1e293b14; }
+        .avatar-leader { box-shadow: 0 0 0 4px #fef08a, 0 0 0 8px #fff; }
+        .copy-success { background: #dbeafe !important; color: #2563eb !important; }
+        .wa-btn { background: #e0f2fe; color: #22c55e; transition: background 0.1s; }
+        .wa-btn:hover { background: #bae6fd; }
+        .save-btn { background: #2563eb; color: #fff; font-weight: 700; border-radius: 0.75rem; padding: 0.75rem 2.5rem; font-size: 1.1rem; transition: background 0.18s; }
+        .save-btn:hover { background: #1e293b; }
+    </style>
+</head>
+<body class="min-h-screen font-inter">
+    <%- include('partials/navbar') %>
+    <div class="theme-header py-8 px-4 sm:px-8 mb-8 rounded-b-3xl shadow-lg">
+        <div class="max-w-5xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <h1 class="text-3xl sm:text-4xl font-extrabold text-white flex items-center gap-3 mb-2 drop-shadow">
+                    <i class="ti ti-users-group text-blue-200"></i>
+                    <span><%= tracker.groupName %></span>
+                </h1>
+                <div class="flex items-center gap-3">
+                    <span id="trackerId" class="text-xs bg-white/70 px-2 py-0.5 rounded font-mono tracking-widest select-all text-blue-900"><%= tracker.trackerId %></span>
+                    <button onclick="copyId()" class="text-xs bg-[#2563eb] hover:bg-white/90 border border-[#1e293b] px-2 py-0.5 rounded text-white hover:text-[#1e293b] font-semibold flex items-center gap-1 transition">
+                        <i class="ti ti-copy"></i> Copy ID
+                    </button>
+                </div>
+            </div>
+            <div class="text-right">
+                <span class="block text-sm text-blue-100 mb-1">Logged in as:</span>
+                <span class="inline-flex items-center gap-2 font-semibold text-white">
+                    <span class="inline-block bg-blue-100 text-blue-700 rounded-full px-3 py-1 text-xs font-bold uppercase">
+                        <%= currentUser.name %>
+                    </span>
+                    <% if (currentUser.permission === 'leader') { %>
+                        <span class="theme-badge theme-badge-leader flex items-center gap-1">
+                            <i class="ti ti-crown"></i> Leader
+                        </span>
+                    <% } else if (currentUser.permission === 'write') { %>
+                        <span class="theme-badge theme-badge-write flex items-center gap-1">
+                            <i class="ti ti-pencil"></i> Write
+                        </span>
+                    <% } else { %>
+                        <span class="theme-badge theme-badge-read flex items-center gap-1">
+                            <i class="ti ti-eye"></i> Read
+                        </span>
+                    <% } %>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10 px-4">
+        <div class="theme-card p-5 flex flex-col items-center">
+            <span class="text-xs font-semibold text-[#2563eb]">Total Amount</span>
+            <span class="text-2xl font-extrabold text-[#1e293b] mt-1">₹<%= members.reduce((sum, m) => sum + m.amount, 0) %></span>
+        </div>
+        <div class="theme-card p-5 flex flex-col items-center">
+            <span class="text-xs font-semibold text-[#2563eb]">Members</span>
+            <span class="text-2xl font-extrabold text-[#1e293b] mt-1"><%= members.length %></span>
+        </div>
+        <div class="theme-card p-5 flex flex-col items-center">
+            <span class="text-xs font-semibold text-[#2563eb]">Per Head</span>
+            <span class="text-2xl font-extrabold text-[#1e293b] mt-1">₹<%= members.length ? (members.reduce((sum, m) => sum + m.amount, 0) / members.length).toFixed(2) : 0 %></span>
+        </div>
+    </div>
+
+    <form action="/dashboard/<%= tracker.trackerId %>/save-all" method="POST" class="max-w-5xl mx-auto grid md:grid-cols-2 gap-7 px-4">
+    <% members.forEach(member => { 
+        // WhatsApp message calculation
+        let msg = `${member.name}, your balance for group ${tracker.groupName}:\nAmount: ₹${member.amount}\n`;
+        if(member.owes < 0) {
+            msg += `You need to give: ₹${(-member.owes).toFixed(2)}`;
+        } else if(member.owes > 0) {
+            msg += `You will get: ₹${member.owes.toFixed(2)}`;
+        } else {
+            msg += `You are settled up!`;
+        }
+        let waLink = `https://wa.me/${member.number}?text=${encodeURIComponent(msg)}`;
+    %>
+        <div class="theme-card p-6 flex flex-col sm:flex-row items-center gap-5">
+            <div class="flex-shrink-0 flex flex-col items-center">
+                <div class="avatar <% if(member.permission==='leader'){ %>avatar-leader<% } %>">
+                    <%= member.name.trim().split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() %>
+                </div>
+                <% if(member.permission === 'leader'){ %>
+                    <span class="mt-2 theme-badge theme-badge-leader flex items-center gap-1">
+                        <i class="ti ti-crown"></i> Leader
+                    </span>
+                <% } else if (member.permission === 'write') { %>
+                    <span class="mt-2 theme-badge theme-badge-write flex items-center gap-1">
+                        <i class="ti ti-pencil"></i> Write
+                    </span>
+                <% } else { %>
+                    <span class="mt-2 theme-badge theme-badge-read flex items-center gap-1">
+                        <i class="ti ti-eye"></i> Read
+                    </span>
+                <% } %>
+            </div>
+            <div class="flex-1 w-full">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <span class="font-semibold text-lg text-[#1e293b]"><%= member.name %></span>
+                    <span class="text-xs text-blue-400 select-all font-mono"><%= member.number %></span>
+                </div>
+                <div class="flex flex-wrap gap-6 mt-4 mb-1">
+                    <div>
+                        <span class="block text-[11px] text-blue-400 mb-1">Amount</span>
+                        <% if ( (currentUser.permission==='leader' || currentUser.permission==='write' ) ) { %>
+                            <input type="hidden" name="target[]" value="<%= member._id %>">
+                            <input type="number" name="amount[]" value="<%= member.amount %>" class="w-20 text-center border border-blue-200 rounded px-2 py-1 focus:border-[#2563eb] transition" />
+                        <% } else { %>
+                            <span class="text-[#2563eb] font-bold">₹<%= member.amount %></span>
+                        <% } %>
+                    </div>
+                    <div>
+                        <span class="block text-[11px] text-blue-400 mb-1">Permission</span>
+                        <% if (currentUser.permission==='leader' && member.number !==currentUser.number) { %>
+                            <select name="permission[]" class="border border-blue-200 rounded px-2 py-1 bg-white focus:border-blue-400 transition text-xs font-semibold text-blue-800">
+                                <option value="read" <%=member.permission==='read' ? 'selected' : '' %>>Read</option>
+                                <option value="write" <%=member.permission==='write' ? 'selected' : '' %>>Write</option>
+                            </select>
+                        <% } else { %>
+                            <input type="hidden" name="permission[]" value="<%= member.permission %>">
+                            <span class="theme-badge theme-badge-<%= member.permission %>"><%= member.permission %></span>
+                        <% } %>
+                    </div>
+                    <div>
+                        <span class="block text-[11px] text-blue-400 mb-1">Owes</span>
+                        <span class="font-semibold text-green-600"><%= member.owes > 0 ? "₹"+member.owes.toFixed(2) : '-' %></span>
+                    </div>
+                    <div>
+                        <span class="block text-[11px] text-blue-400 mb-1">Debit</span>
+                        <span class="font-semibold text-red-500"><%= member.owes < 0 ? "₹"+(-member.owes).toFixed(2) : '-' %></span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex flex-col gap-2 min-w-[60px] items-center">
+                <a href="<%= waLink %>" target="_blank" title="WhatsApp"
+                    class="wa-btn w-10 h-10 flex items-center justify-center rounded-full shadow hover:scale-110 transition">
+                    <i class="ti ti-brand-whatsapp text-2xl"></i>
+                </a>
+            </div>
+        </div>
+    <% }); %>
+    <% if (currentUser.permission==='leader' || currentUser.permission==='write' ) { %>
+        <div class="col-span-2 flex justify-end mt-7">
+            <button type="submit" class="save-btn shadow-lg flex items-center gap-2">
+                <i class="ti ti-device-floppy"></i>
+                Save Changes
+            </button>
+        </div>
+    <% } %>
+    <input type="hidden" name="user" value="<%= currentUser.number %>">
+    </form>
+
+    <script>
+        function copyId() {
+            const el = document.getElementById('trackerId');
+            navigator.clipboard.writeText(el.innerText);
+            el.classList.add('copy-success');
+            setTimeout(()=>el.classList.remove('copy-success'), 700);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Your Groups</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont/tabler-icons.min.css">
+</head>
+<body class="bg-[#f8fafc] min-h-screen flex flex-col items-center py-12 font-inter">
+  <%- include('partials/navbar') %>
+  <div class="w-full max-w-md card-3d p-8 bg-white rounded-2xl shadow-lg border border-[#e0e7ef] mt-8">
+    <h2 class="text-2xl font-extrabold text-[#1e293b] mb-6 flex items-center gap-2">
+      <i class="ti ti-history"></i>
+      Your Groups
+    </h2>
+    <form action="/history" method="POST" class="mb-6 flex items-center gap-2">
+      <input type="text" name="number" required placeholder="Your Number" value="<%= number %>"
+        class="flex-1 px-3 py-2 rounded-xl border border-[#e0e7ef] input-3d focus:outline-none focus:border-[#2563eb] text-[#1e293b]" />
+      <button type="submit" class="bg-[#2563eb] text-white px-5 py-2 rounded-xl font-bold shadow hover:bg-[#1e293b] transition">
+        Show
+      </button>
+    </form>
+    <% if (trackers && trackers.length > 0) { %>
+      <div class="flex flex-col gap-3">
+        <% trackers.forEach(tracker => { %>
+          <a href="/dashboard/<%= tracker.trackerId %>?user=<%= number %>"
+            class="flex items-center gap-3 px-4 py-3 rounded-xl bg-[#f1f5f9] hover:bg-[#2563eb] hover:text-white transition shadow border border-[#e0e7ef] font-semibold text-lg">
+            <i class="ti ti-users-group"></i>
+            <span><%= tracker.groupName %></span>
+            <span class="ml-auto text-xs font-mono bg-[#e0e7ef] px-2 py-0.5 rounded text-[#2563eb]">ID: <%= tracker.trackerId %></span>
+          </a>
+        <% }) %>
+      </div>
+    <% } else if (trackers) { %>
+      <div class="text-gray-500 mt-6 text-center">No groups found for this number.</div>
+    <% } %>
+    <a href="/" class="block mt-10 text-[#2563eb] text-sm underline hover:text-[#1e293b] text-center">
+      &larr; Go Home
+    </a>
+  </div>
+</body>
+</html>

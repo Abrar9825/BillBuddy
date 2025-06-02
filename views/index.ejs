@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Expense Tracker</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont/tabler-icons.min.css">
+    <style>
+        body {
+            background: #fff;
+            background-image: radial-gradient(#1e293b 0.7px, transparent 0.7px);
+            background-size: 18px 18px;
+        }
+        .tracker-digit.success { border-color: #22c55e !important; background: #dcfce7 !important; }
+        .tracker-digit.error { border-color: #ef4444 !important; background: #fee2e2 !important; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-inter">
+    <%- include('partials/navbar') %>
+    <div class="flex-grow flex items-center justify-center">
+    <div class="w-full max-w-md p-1 card-3d">
+        <div class="rounded-2xl p-8 relative z-10 bg-white shadow-lg border border-[#e5e7eb]">
+            <h2 class="text-3xl font-extrabold text-center text-[#1e293b] mb-8 select-none tracking-tight">
+                Expense Tracker
+            </h2>
+            <form action="/create-tracker" method="POST" class="space-y-5 mb-3">
+                <div>
+                    <label for="groupName" class="block text-sm font-semibold text-[#1e293b] mb-1 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-[#1e293b]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 20 20">
+                            <path d="M10 3a5 5 0 100 10A5 5 0 0010 3z"></path>
+                            <path d="M2 17.5a7.978 7.978 0 0116 0" />
+                        </svg>
+                        Group Name
+                    </label>
+                    <input id="groupName" name="groupName" required placeholder="e.g. Family"
+                        class="w-full px-3 py-2 rounded-xl input-3d border border-[#e5e7eb] text-[#1e293b] placeholder-[#64748b] text-base"
+                        autocomplete="off" />
+                </div>
+                <div>
+                    <label for="name" class="block text-sm font-semibold text-[#1e293b] mb-1 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-[#334155]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 20 20">
+                            <circle cx="10" cy="7" r="4"></circle>
+                            <path d="M2 17.5a7.978 7.978 0 0116 0" />
+                        </svg>
+                        Your Name
+                    </label>
+                    <input id="name" name="name" required placeholder="e.g. Sara"
+                        class="w-full px-3 py-2 rounded-xl input-3d border border-[#e5e7eb] text-[#1e293b] placeholder-[#64748b] text-base"
+                        autocomplete="off" />
+                </div>
+                <div>
+                    <label for="number" class="block text-sm font-semibold text-[#1e293b] mb-1 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-[#334155]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 20 20">
+                            <rect x="4" y="6" width="12" height="8" rx="2"></rect>
+                            <path d="M8 10h4"></path>
+                        </svg>
+                        Your Number
+                    </label>
+                    <input id="number" name="number" required placeholder="e.g. 0300-XXXXXXX"
+                        class="w-full px-3 py-2 rounded-xl input-3d border border-[#e5e7eb] text-[#1e293b] placeholder-[#64748b] text-base"
+                        autocomplete="off" />
+                </div>
+                <button type="submit"
+                    class="w-full py-2 bg-[#1e293b] hover:bg-[#334155] text-white rounded-xl font-bold text-lg shadow-md mt-1 transition">
+                    Create Tracker
+                </button>
+            </form>
+            <div class="relative my-5 flex items-center">
+                <div class="flex-grow border-t border-[#e5e7eb]"></div>
+                <span class="mx-3 text-[#64748b] text-xs select-none font-semibold">OR</span>
+                <div class="flex-grow border-t border-[#e5e7eb]"></div>
+            </div>
+            <!-- Join Tracker Form (Step 1: Enter Tracker ID) -->
+            <form id="tracker-id-form" autocomplete="off" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-[#1e293b] mb-1 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-[#334155]" fill="none" stroke="currentColor" stroke-width="2"
+                            viewBox="0 0 20 20">
+                            <rect x="3" y="9" width="14" height="6" rx="2"></rect>
+                            <path d="M7 9V7a3 3 0 016 0v2"></path>
+                        </svg>
+                        Tracker ID
+                    </label>
+                    <div class="flex gap-2 justify-center pt-1 pb-2" id="trackerInputRow">
+                        <% for(let i=1; i<=6; i++) { %>
+                        <input type="text" inputmode="numeric" maxlength="1" name="trackerId<%=i%>" required pattern="\d"
+                            class="tracker-digit w-10 h-12 text-center text-2xl rounded-xl font-mono border border-[#1e293b] outline-none transition" />
+                        <% } %>
+                    </div>
+                    <div id="trackerIdError" class="text-center text-sm text-red-500 font-medium mt-2 hidden">
+                        Invalid Tracker ID. Please try again.
+                    </div>
+                </div>
+                <button type="submit"
+                    class="w-full py-2 bg-[#1e293b] hover:bg-[#334155] text-white rounded-xl font-bold text-lg shadow-md mt-1 transition">
+                    Next
+                </button>
+            </form>
+            <div class="flex justify-center items-center mt-8 gap-2 text-sm text-[#64748b] font-medium">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" stroke="#1e293b" />
+                    <path stroke="#334155" stroke-linecap="round" stroke-width="2" d="M9.5 16a4 4 0 015 0" />
+                    <circle cx="9" cy="10" r="1.2" fill="#334155" />
+                    <circle cx="15" cy="10" r="1.2" fill="#334155" />
+                </svg>
+                Minimal, Secure & Fast Expense Sharing.
+            </div>
+        </div>
+    </div>
+    </div>
+    <script>
+        // Tracker ID Step-by-step Validation and Redirect
+        const digits = Array.from(document.querySelectorAll('.tracker-digit'));
+        const trackerIdError = document.getElementById("trackerIdError");
+        const trackerForm = document.getElementById("tracker-id-form");
+        function resetTrackerDigitColors() { digits.forEach(box => { box.classList.remove("success", "error"); }); }
+        digits.forEach((el, idx) => {
+            el.addEventListener('input', () => {
+                if (el.value.length === 1 && idx < digits.length - 1) {
+                    digits[idx + 1].focus();
+                }
+                resetTrackerDigitColors();
+                for (let i = 0; i <= idx; i++) {
+                    digits[i].classList.add("success");
+                }
+            });
+            el.addEventListener('keydown', (e) => {
+                if (e.key === "Backspace" && !el.value && idx > 0) {
+                    digits[idx - 1].focus();
+                }
+            });
+        });
+        trackerForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const trackerId = digits.map(d => d.value).join("");
+            if (trackerId.length !== 6) return;
+            digits.forEach(d => d.classList.add("animate-pulse"));
+            const response = await fetch(`/api/validate-tracker?trackerId=${trackerId}`);
+            const data = await response.json();
+            digits.forEach(d => d.classList.remove("animate-pulse"));
+            if (data.valid) {
+                digits.forEach(d => { d.classList.remove("error"); d.classList.add("success"); });
+                trackerIdError.classList.add("hidden");
+                setTimeout(() => { window.location.href = `/join?trackerId=${trackerId}`; }, 700);
+            } else {
+                digits.forEach(d => { d.classList.remove("success"); d.classList.add("error"); });
+                trackerIdError.classList.remove("hidden");
+                setTimeout(() => {
+                    digits.forEach(d => d.value = "");
+                    digits[0].focus();
+                    resetTrackerDigitColors();
+                    trackerIdError.classList.add("hidden");
+                }, 1200);
+            }
+        });
+    </script>
+</body>
+</html>
