@@ -53,6 +53,11 @@
         <input id="number" name="number" required placeholder="e.g. 9875000000"
           class="w-full px-3 py-2 rounded-xl input-3d focus:outline-none text-[#1e293b] placeholder-[#64748b] text-base" autocomplete="off" />
       </div>
+      <div class="mb-6">
+        <label for="pin" class="block text-sm font-semibold text-[#1e293b] mb-2">Set a PIN <span class="text-[#64748b]">(4 or 6 digit, for future access)</span></label>
+        <input id="pin" name="pin" required minlength="4" maxlength="6" pattern="\d{4,6}" placeholder="e.g. 1234"
+          class="w-full px-3 py-2 rounded-xl input-3d focus:outline-none text-[#1e293b] placeholder-[#64748b] text-base" autocomplete="new-password" />
+      </div>
       <button type="submit"
         class="w-full py-2 bg-[#1e293b] hover:bg-[#334155] text-white rounded-xl font-bold text-lg shadow-md transition">
         Join Tracker

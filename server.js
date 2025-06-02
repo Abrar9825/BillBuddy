@@ -27,12 +27,14 @@ const memberSchema = new mongoose.Schema({
   trackerId: String,
   name: String,
   number: String,
+  pin: String, // <-- PIN field added
   permission: { type: String, enum: ['read', 'write', 'leader'] },
   amount: { type: Number, default: 0 },
 });
 const userSchema = new mongoose.Schema({
   number: { type: String, unique: true },
   name: String,
+  pin: String, // <-- PIN for user (optional, store if you want)
   trackers: [String],
 });
 const Tracker = mongoose.model('Tracker', trackerSchema);
@@ -51,7 +53,7 @@ app.get('/', (req, res) => {
 
 // Create Tracker
 app.post('/create-tracker', async (req, res) => {
-  const { groupName, name, number } = req.body;
+  const { groupName, name, number, pin } = req.body;
 
   let trackerId;
   let exists;
@@ -61,17 +63,18 @@ app.post('/create-tracker', async (req, res) => {
   } while (exists);
 
   await Tracker.create({ trackerId, groupName, createdBy: number });
-  await Member.create({ trackerId, name, number, permission: 'leader' });
+  await Member.create({ trackerId, name, number, pin, permission: 'leader' });
 
   let user = await User.findOne({ number });
   if (user) {
     user.name = name;
+    user.pin = pin; // update pin on create
     if (!user.trackers.includes(trackerId)) {
       user.trackers.push(trackerId);
     }
     await user.save();
   } else {
-    await User.create({ number, name, trackers: [trackerId] });
+    await User.create({ number, name, pin, trackers: [trackerId] });
   }
 
   res.redirect(`/dashboard/${trackerId}?user=${number}`);
@@ -94,25 +97,26 @@ app.get('/join', (req, res) => {
 
 // Actually join tracker
 app.post('/join', async (req, res) => {
-  const { trackerId, name, number } = req.body;
+  const { trackerId, name, number, pin } = req.body;
   const tracker = await Tracker.findOne({ trackerId });
 
   if (!tracker) return res.send('Invalid Tracker ID');
 
   const exists = await Member.findOne({ trackerId, number });
   if (!exists) {
-    await Member.create({ trackerId, name, number, permission: 'read' });
+    await Member.create({ trackerId, name, number, pin, permission: 'read' });
   }
 
   let user = await User.findOne({ number });
   if (user) {
     user.name = name;
+    user.pin = pin; // update pin on join
     if (!user.trackers.includes(trackerId)) {
       user.trackers.push(trackerId);
     }
     await user.save();
   } else {
-    await User.create({ number, name, trackers: [trackerId] });
+    await User.create({ number, name, pin, trackers: [trackerId] });
   }
 
   res.redirect(`/dashboard/${trackerId}?user=${number}`);
@@ -185,8 +189,8 @@ app.get('/history', (req, res) => {
 });
 
 app.post('/history', async (req, res) => {
-  const { number } = req.body;
-  const user = await User.findOne({ number });
+  const { number, pin } = req.body;
+  const user = await User.findOne({ number, pin }); // also match by pin for security
   let trackers = [];
   if (user && user.trackers.length > 0) {
     trackers = await Tracker.find({ trackerId: { $in: user.trackers } });
